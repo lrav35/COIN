@@ -27,7 +27,7 @@ contract SafeMath {
         c = a - b;
     }
 
-    function save Mul(uint a, uint b) pubic pure returns (uint c) {
+    function save Mul(uint a, uint b) public pure returns (uint c) {
         c = a * b;
         require(a == 0 || c / a == b);
     }
