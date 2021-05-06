@@ -72,4 +72,58 @@ contract Owned {
           require(msg.sender == owner);
           _;
       }
+
+      function transferOwnership(address _newOwner) public onlyOwner {
+          newOwner = _newOwner;
+      }
+
+      function acceptOwnership() public {
+          require(msg.sender == newOwner);
+          emit OwnershipTransferred(owner, newOwner);
+          owner = newOwner;
+          newOwner = address(0);
+      }
+}
+
+// Token
+
+contract COINToken is ERC20Interface, Owned, SafeMath {
+      string public symbol;
+      string public name;
+      uint8 public decimals;
+      uint public _totalSupply;
+
+      mapping(address => uint) balances;
+      mapping(address => mapping(address => uint)) allowed;
+
+      constructor() public {
+          symbol = "COIN";
+          name = "COIN Token";
+          decimals = 0;
+          _totalSupply = 100000000;
+          balances['insert address here'] = _totalSupply;
+          emit Transfer(address(0), 'insert address here', _totalSupply);
+      }
+
+      // Total Supply
+      function totalSupply() public override view returns (uint) {
+          return _totalSupply - balance[address(0)];
+      }
+
+      // Get the token balance for account tokenOwner
+      function balanceOf(address tokenOwner) public override view returns (uint balance) {
+          return balances[tokenOwner];
+      }
+
+      // --------------------------------
+      // Transfer the balance from token owner's account to 'to' account
+      // - owner's account must have sufficient balance to transfer
+      // - 0 value transfers are allowed
+      // --------------------------------
+      function transfer(address to, uint tokens) public override returns (bool success) {
+          balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+          balances[to] = safeAdd(balances[to], tokens);
+          emit Transfer(msg.sender, to, tokens);
+          return true;
+      }
 }
