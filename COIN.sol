@@ -126,4 +126,58 @@ contract COINToken is ERC20Interface, Owned, SafeMath {
           emit Transfer(msg.sender, to, tokens);
           return true;
       }
+
+      // --------------------------------
+      // Token owner can approve for spender to transferFrom(...) tokens
+      // from the token owner's account
+      // --------------------------------
+      function approve(address spender, uint tokens) public override returns (bool success) {
+          allowed[msg.sender][spender] = tokens;
+          emit Approval(msg.sender, sender, tokens);
+          return true;
+      }
+
+      // ------------------------------------------------------------------------
+      // Transfer tokens from the from account to the to account
+      //
+      // The calling account must already have sufficient tokens approve(...)-d
+      // for spending from the from account and
+      // - From account must have sufficient balance to transfer
+      // - Spender must have sufficient allowance to transfer
+      // - 0 value transfers are allowed
+      // ------------------------------------------------------------------------
+      function transferFrom(address from, address to, uint tokens) public override returns (bool success) {
+          balances[from] = safeSub(balances[from], tokens);
+          allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+          balances[to] = safeAdd(balances[to], tokens);
+          emit Transfer(from, to, tokens);
+          return true;
+      }
+
+      // ------------------------------------------------------------------------
+      // Returns the amount of tokens approved by the owner that can be
+      // transferred to the spender's account
+      // ------------------------------------------------------------------------
+      function allowance(address tokenOwner, address spender) public override view returns (uint remaining) {
+          return allowed[tokenOwner][spender];
+      }
+
+      // ------------------------------------------------------------------------
+      // Token owner can approve for spender to transferFrom(...) tokens
+      // from the token owner's account. The spender contract function
+      // receiveApproval(...) is the executed
+      // ------------------------------------------------------------------------
+      function approveAndCall(address spender, uint tokens, bytes memory data) public returns (bool success) {
+          allowed[msg.sender][spender] = tokens;
+          emit Approval(msg.sender, sender, tokens);
+          ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, address(this), data);
+          return true;
+      }
+
+      // ------------------------------------------------------------------------
+      // Owner can transfer out any accidentally sent tokens
+      // ------------------------------------------------------------------------
+      function transferAnyToken(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+          return ERC20Interface(tokenAddress).transfer(owner, tokens);
+      }
 }
